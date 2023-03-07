@@ -9,6 +9,9 @@
   - 다나와 사이트에서 여러 제조사별 무선청소기의 가격과 성능에 대해 파악
 ## Natural Language Processing
 - [키워드 분석](https://github.com/nagasss/MySpace/blob/master/NLT/Keyword_Analysis.ipynb)
+  - naver 영화 리뷰 데이터 사용, 핵심어(keyword) 분석 및 시각화
 - [군집 분석](https://github.com/nagasss/MySpace/blob/master/NLT/Cluster_Analysis.ipynb)
+  - naver 영화 리뷰 데이터 사용, 계층적, 비계층적 군집화 
 - [문서 분류](https://github.com/nagasss/MySpace/blob/master/NLT/Document_Classification.ipynb)
+  - 20개의 주제를 가지는 뉴스그룹 데이터 사용, 20개의 문서로 분류하는 모델 학습
 - [의미 연결망 분석](https://github.com/nagasss/MySpace/blob/master/NLT/Semantic_Network_Analysis.ipynb)
