@@ -25,5 +25,5 @@
 - [RNN과 LSTM, GRU 모델 학습훈련](https://github.com/nagasss/MySpace/blob/master/NLT/RNN&LSTM&GRU.ipynb)
   - imdb 데이터를 이용해서 RNN, LSTM, GRU 구조 공부 및 모델 학습 후 비교
 
-- [Transformer](https://github.com/nagasss/MySpace/blob/master/NLT/transformer.ipynb)
+- [Transformer](https://github.com/nagasss/MySpace/blob/master/NLT/Transformer.ipynb)
   - transformer 이론 공부
