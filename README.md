@@ -10,12 +10,20 @@
 ## Natural Language Processing
 - [키워드 분석](https://github.com/nagasss/MySpace/blob/master/NLT/Keyword_Analysis.ipynb)
   - naver 영화 리뷰 데이터 사용, 핵심어(keyword) 분석 및 시각화
+  
 - [군집 분석](https://github.com/nagasss/MySpace/blob/master/NLT/Cluster_Analysis.ipynb)
   - naver 영화 리뷰 데이터 사용, 계층적, 비계층적 군집화 
+  
 - [문서 분류](https://github.com/nagasss/MySpace/blob/master/NLT/Document_Classification.ipynb)
   - 20개의 주제를 가지는 뉴스그룹 데이터 사용, 20개의 문서로 분류하는 모델 학습
+  
 - [의미 연결망 분석](https://github.com/nagasss/MySpace/blob/master/NLT/Semantic_Network_Analysis.ipynb)
+
 - [CNN](https://github.com/nagasss/MySpace/blob/master/NLT/CNN.ipynb)
   - CNN 모델 이용한 스팸메일 분류
+  
 - [RNN과 LSTM, GRU 모델 학습훈련](https://github.com/nagasss/MySpace/blob/master/NLT/RNN&LSTM&GRU.ipynb)
   - imdb 데이터를 이용해서 RNN, LSTM, GRU 구조 공부 및 모델 학습 후 비교
+
+- [Transformer](https://github.com/nagasss/MySpace/blob/master/NLT/transformer.ipynb)
+  - transformer 
