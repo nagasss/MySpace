@@ -1,6 +1,9 @@
 # MySpace
 
 ## Practice with data
+- [Data Analysis]
+  - 멕시코풍 프랜차이즈 데이터분석(https://github.com/nagasss/MySpace/blob/master/practice/Chipotle.ipynb)
+  - 국가별 음주 데이터분석(https://github.com/nagasss/MySpace/blob/master/practice/Drinks.ipynb)
 - [Linear Regression with OLS, VIF](https://github.com/nagasss/MySpace/blob/master/practice/baseball.ipynb)
   - 2017년도 야구선수 연봉 데이터를 활용한 선형회귀와 OLS, VIF를 이용한 데이터분석
 - [machine learning Regression](https://github.com/nagasss/MySpace/blob/master/practice/bicycle_ml.ipynb)
