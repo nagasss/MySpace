@@ -1,4 +1,4 @@
-# MySpace
+# My
 
 ## Practice with data
 - [Data Analysis]
