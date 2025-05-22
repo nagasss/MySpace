@@ -1,0 +1,758 @@
+# 1. 데이터 불러오기
+import pandas as pd
+shoes_df = pd.read_csv('shoes_total_reviews_urlclean.csv')
+shoes_df.head()
+shoes_df.info()
+```
+📌 1. 리뷰 관련 컬럼
+----
+grade	리뷰 평점 (예: 1~5점)
+review_contents	리뷰 텍스트 내용
+useful_count	리뷰가 유용하다고 평가된 횟수 (좋아요 수)
+
+
+📌 2. 상품 관련 컬럼
+----
+site_name	상품이 등록된 사이트 이름
+brand_name	브랜드명 (예: Nike, Adidas)
+inter_cat	상품의 내부 카테고리 (예: 러닝화, 농구화)
+product_id	제품 고유 ID
+product_name	제품명 (예: "Nike Air Max")
+product_color	제품 색상 (예: "Red", "Black")
+product_gender	제품 성별 (예: 남성/여성/유니섹스)
+product_price	제품 가격
+product_url	제품 상세 페이지 URL
+
+
+📌 3. 구매자 정보 관련 컬럼
+----
+buyer_id	구매자 ID
+buyer_size	구매자의 신발 사이즈
+buy_size	구매한 신발 사이즈
+buyer_height	구매자의 키
+buyer_weight	구매자의 몸무게
+buyer_daily_size	구매자가 평소 신는 신발 사이즈
+buyer_daily_top	구매자가 평소 입는 상의 사이즈
+buyer_daily_bottom	구매자가 평소 입는 하의 사이즈
+buyer_realbuy_size	구매자가 실제 구매한 신발 사이즈
+buyer_color_fit_yn	구매자가 선택한 색상이 맞았는지 여부 (예: Y/N)
+buyer_ball_yn	구매자가 발볼에 대해 리뷰했는지 여부
+buyer_instep_yn	구매자가 발등 높이에 대해 리뷰했는지 여부
+
+
+📌 4. 제품 착용감(핏) 관련 컬럼
+발볼 (ball), 발등 높이 (instep), 색상 (color), 길이 (length) 등..
+
+발등
+----
+stat_instep_very_low	발등이 매우 낮다고 평가된 수
+stat_instep_low	발등이 낮다고 평가된 수
+stat_instep_fit	발등이 적당하다고 평가된 수
+stat_instep_high	발등이 높다고 평가된 수
+stat_instep_very_high	발등이 매우 높다고 평가된 수
+✔ 발볼 관련 컬럼
+
+발볼
+---
+stat_ball_very_narr	발볼이 매우 좁다고 평가된 수
+stat_ball_narr	발볼이 좁다고 평가된 수
+stat_ball_fit	발볼이 적당하다고 평가된 수
+stat_ball_wide	발볼이 넓다고 평가된 수
+stat_ball_very_wide	발볼이 매우 넓다고 평가된 수
+✔ 색상 관련 컬럼
+
+색상
+---
+stat_color_very_bright	색상이 매우 밝다고 평가된 수
+stat_color_little_bright	색상이 조금 밝다고 평가된 수
+stat_color_fit	색상이 적당하다고 평가된 수
+stat_color_little_dark	색상이 조금 어둡다고 평가된 수
+stat_color_very_dark	색상이 매우 어둡다고 평가된 수
+✔ 길이 관련 컬럼
+
+길이
+---
+stat_length_10_short	길이가 10% 짧다고 평가된 수
+stat_length_5_short	길이가 5% 짧다고 평가된 수
+stat_length_fit	길이가 적당하다고 평가된 수
+stat_length_5_long	길이가 5% 길다고 평가된 수
+stat_length_10_long	길이가 10% 길다고 평가된 수
+```
+# 2. 데이터 전처리
+## 0. Col : reivew_contents  전처리 작업
+### 0-１. review_contents : (NaN, 특수문자로만 이루어져 있는 경우 제거)
+
+* 리뷰 데이터에서 불필요한 데이터를 제거.
+# 리뷰 텍스트에 NaN값이 존재하는 경우. (shoes_df[shoes_df['review_contents'].isna()] 로 확인.)
+print('NaN값을 삭제하기 전', shoes_df.shape)
+nan_contents = shoes_df.index[shoes_df['review_contents'].isna()] #df 타입.
+shoes_df = shoes_df.drop(nan_contents)
+print('NaN값을 삭제한 이후', shoes_df.shape)
+# 리뷰 텍스트가 특수문자로만 이루어져 있는 경우.
+special_char_rows = shoes_df[shoes_df['review_contents'].str.match(r'^[\W_]+$', na=False)]
+
+# 함께 살펴보는 컬럼 : grade
+special_char_rows.loc[special_char_rows.index,['grade', 'review_contents']]
+print('특수문자로 이루어진 리뷰를 삭제하기 전',shoes_df.shape)
+shoes_df = shoes_df.drop(special_char_rows.index)
+print('특수문자로 이루어진 리뷰를 삭제한 이후',shoes_df.shape)
+### 0-２. review_contents : 숫자로만 이루어져 있는 경우
+
+* 리뷰 데이터에서 불필요한 데이터를 제거.
+# 리뷰 데이터가 숫자로만 이루여져 있는 경우
+num_contents = shoes_df[shoes_df['review_contents'].str.match(r'^\d+$')]
+
+# 구매 점수와 함께 살펴보기(리뷰 데이터)
+num_contents_rows = num_contents.loc[num_contents.index,['grade', 'review_contents']]
+num_contents_rows
+# 숫자 리뷰 데이터 삭제
+print('숫자로만 이루어진 리뷰 텍스트 삭제 전', shoes_df.shape)
+shoes_df = shoes_df.drop(num_contents_rows.index)
+print('숫자로만 이루어진 리뷰 텍스트 삭제 이후', shoes_df.shape)
+### 0-3. review_contents :한 개 이상의 문자(자음, 모음, 알파벳 등)으로만 반복되는 경우.
+
+* 리뷰 데이터에서 불필요한 데이터를 제거.
+# 한 개 이상의 문자(자음, 모음, 알파벳 등)만 반복되는 경우
+repeated_chars = shoes_df[shoes_df['review_contents'].str.match(r'^(.+?)\1+$')]
+
+# 점수와 함께 살펴보기.
+repeated_chars_rows = repeated_chars.loc[repeated_chars.index,['grade', 'review_contents']]
+repeated_chars_rows
+import re
+# 반복되는 문장을 찾아 한번만 남기고 제거하기.
+def remove_repeated_phases(review_contents):
+    """
+    반복되는 문장(단어)을 찾아서 첫번째 문장(단어)를 제외하고
+    모두 제거하는 함수입니다.
+    """
+
+    # 찾고자 하는 패턴
+    regax_pattern =  r'^(.+?)\1+$'
+
+
+    # col의 데이터 값이 패턴과 완전히 일치하는가에 대한 여부
+    match_review_texts = re.fullmatch(regax_pattern, review_contents)
+
+    # 1개의 그룹만 남겨놓기 (반복되는 부분 모두 제거)
+    return match_review_texts.group(1) if match_review_texts else review_contents
+# 추려놓은 df에 적용.
+repeated_chars.loc[:,'review_contents'] = repeated_chars['review_contents'].apply(remove_repeated_phases)
+
+# 수정한 부분을 원래 df에 얹기.
+shoes_df.update(repeated_chars)
+### 0-４. review_contents :알파벳으로만 이루어진 경우
+
+* 리뷰 데이터에서 불필요한 데이터를 제거.
+# 알파벳으로만 이루어진 경우
+only_alpha_chars = shoes_df[shoes_df['review_contents'].str.match(r'^[a-zA-Z]+$')]
+only_alpha_chars[['grade','review_contents']]
+print('알파벳으로 이루어진 리뷰 텍스트 삭제 전', shoes_df.shape)
+shoes_df = shoes_df.drop(only_alpha_chars.index)
+print('알파벳으로 이루어진 리뷰 텍스트 삭제 이후', shoes_df.shape)
+## 1. 신발명 품목화
+
+* 브랜드별 제품명 품목화
+    * 브랜드명 통일 이후 진행.
+shoes_df['brand_name'].unique()
+shoes_df['product_name'].unique()
+#### ※ 참고. 반스 데이터
+    ```
+    * DX : 복각라인, 아웃솔에 코팅이 되어 있고 밑창이 클래식(기본 모델)보다 푹신
+    * 볼트 : 볼트 라인은 반스에서 최상위 라인
+    * 라이트 : 어센틱 보다 가벼움
+    * 로프로 : 어센틱과 다르게 폭싱 테이프 없이 보다 미니멀하게 디자인했다.  어센틱 로우프로는 어센틱에 비해 미드솔 높이가 약 1cm 정도 낮아졌다.
+    * vr3 : 친환경 소재.
+    * 플랫폼 : 디자인 다름, 육안으로 못알아봐서 처음에 합쳤음 굽높이도 다름
+    * 컴피쿠시 : 사이즈 작음
+    * SF: SF는 서핑 스타일을 강조하며 SF는 지속 가능한 재료를 사용.
+    * 크리퍼 : 두꺼운 밑창, 그란지 스타일 강조.
+    * 호버 : 더 두꺼운 밑창을 가지고 있어 스타일과 편안함을 동시에 제공, 4cm의 플랫(PLAT) 밑창이 특징,경량 소재를 사용하여 착용감이 우수하며, 발에 더 잘 맞도록 설계
+    * 체커보드 : 채커보드 패턴이 특징인 모델.
+    * 엘렌 : 슬립온보다 더 패딩이 두껍고, 발목을 감싸는 디자인으로 편안함을 강조, 소재: Duracap™ 기술이 적용된 내구성 있는 소재로 제작되어, 발가락 부분의 내구성이 강화됨, 장시간 서 있거나 걷는 데 적합한 디자인으로, 편안함을 중시하는 사용자에게 추천됨..
+    *  138  : 발목을 더 잘 지지하는 디자인으로, 클래식 슬립온보다 더 높은 형태
+    ```
+### 2-1. 반스 품목화 
+vans_df = shoes_df[shoes_df['brand_name'] == 'VANS']
+vans_df.shape
+vans_df['product_name'].value_counts()
+#### (1) 컬러 띠어리 작업
+color_theory = vans_df[vans_df['product_name'].str.contains('컬러 띠어리')]
+print('"컬러 띠어리"가 포함된 품목명은 다음과 같습니다:')
+
+for name in color_theory['product_name'].unique():
+    print(f'\n {name}')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'클래식 슬립-온 - 컬러 띠어리 체커보드 아트모스피어', '클래식 슬립온 컬러 띠어리')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'올드 스쿨 - 컬러 띠어리 더스티 블루', '올드스쿨 컬러 띠어리')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'어센틱 - 컬러 띠어리 아이스버그 그린', '어센틱 컬러 띠어리')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'스케이트-하이 - 컬러 띠어리 프렌치 오크', '스케이트 하이 컬러 띠어리')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'클래식 슬립-온 컬러 띠어리 비컨 블루', '클래식 슬립온 컬러 띠어리')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'어센틱 -  컬러 띠어리 더스티 블루', '어센틱 컬러 띠어리')
+
+color_theory = vans_df[vans_df['product_name'].str.contains('컬러 띠어리')]
+print('📝 "컬러 띠어리"를 기준으로 품목화 한 결과:')
+
+for name in color_theory['product_name'].unique():
+    print(f'\n {name}')
+#### (2) 뮬 작업
+muul= vans_df[vans_df['product_name'].str.contains('뮬')]
+print('"뮬"이 포함된 품목명은 다음과 같습니다:')
+
+for name in muul['product_name'].unique():
+    print(f'\n {name}')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'클래식 슬립-온 뮬 - 체커보드 블랙/화이트',  '클래식 슬립온 뮬 컬러 띠어리 체커보드')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'슬립 온 뮬 호버 - 블랙/화이트', '슬립온 뮬 호버')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'올드 스쿨 뮬 - 블랙/트루 화이트', '올드스쿨 뮬')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'어센틱 뮬 - 블랙/트루 화이트', '어센틱 뮬')
+
+
+muul= vans_df[vans_df['product_name'].str.contains('뮬')]
+print('📝 "뮬"을 기준으로 품목화 한 결과:')
+
+for name in muul['product_name'].unique():
+    print(f'\n {name}')
+#### (３) 체커보드 작업.
+checker_board = vans_df[vans_df['product_name'].str.contains('체커보드')]
+checker_board['product_name'].unique()
+
+
+print('"체커보드"가 포함된 품목명은 다음과 같습니다:')
+
+for name in checker_board['product_name'].unique():
+    print(f'\n {name}')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'올드 스쿨 - 드레스 블루 체커보드', '올드스쿨 체커보드')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'어센틱 - 체커보드 블랙/화이트', '어센틱 체커보드')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'슬립-온 VR3 - 체커보드 블랙/마쉬멜로우', '슬립온 VR3 체커보드')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'어센틱 - 체커보드 브라운', '어센틱 체커보드')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'올드 스쿨 플랫폼 - 체커보드 블랙/트루 화이트', '올드스쿨 플랫폼 체커보드')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'어센틱 - 체커보드 문 락', '어센틱 체커보드')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'어센틱 - 체커보드 블루/화이트', '어센틱 체커보드')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'슬립-온 VR3 SF - 체커보드 블랙/마쉬멜로우', '슬립온 VR3 SF 체커보드')
+
+
+
+checker_board= vans_df[vans_df['product_name'].str.contains('체커보드')]
+print('📝 "체커보드"를 기준으로 품목화 한 결과:')
+
+for name in checker_board['product_name'].unique():
+    print(f'\n {name}')
+#### (4) 발레리나 작업.
+ballet = vans_df[vans_df['product_name'].str.contains('발레')]
+ballet['product_name'].unique()
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'메리 제인 - 발레리나 블랙', '메리제인 발레리나')
+#### (5) 온 작업.
+on = vans_df[vans_df['product_name'].str.contains('온')]
+
+print('"온"이 포함된 품목명은 다음과 같습니다:')
+
+for name in on['product_name'].unique():
+    print(f'\n {name}')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'슬립 온 엘렙 - 네이비/화이트', '슬립온 엘렙')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'클래식 슬립-온 - 블랙 앤 화이트 체커/화이트', '클래식 슬립온')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'슬립 온 엘렙 - S.베이지/화이트', '슬립온 엘렙')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'슬립 온 호버 - 블랙/화이트/체크', '슬립온 호버')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'클래식 슬립-온 - 트루 화이트', '클래식 슬립온')
+vans_df.loc[:, 'product_name'] = vans_df['product_name'].str.replace(r'클래식 슬립-온 - 블랙', '클래식 슬립온')
+
+
+on = vans_df[vans_df['product_name'].str.contains('온')]
+print('📝 "온"을 기준으로 품목화 한 결과:')
+
+for name in on['product_name'].unique():
+    print(f'\n {name}')
+## 2. 컬럼 : 브랜드명 & grade 통일
+# 브랜드 이름 통일.
+shoes_df.loc[shoes_df['brand_name'] == 'adidas', 'brand_name'] = 'ADIDAS'
+
+# grade 등급 통일.
+shoes_df.loc[shoes_df['grade'] == '아주 좋아요', 'grade'] = '5.0'
+shoes_df.loc[shoes_df['grade'] == '맘에 들어요', 'grade'] = '4.0'
+shoes_df.loc[shoes_df['grade'] == '보통이에요', 'grade'] = '3.0'
+shoes_df.loc[shoes_df['grade'] == '그냥 그래요', 'grade'] = '2.0'
+shoes_df.loc[shoes_df['grade'] == '별로예요', 'grade'] = '1.0'
+## 3. 중요 컬럼 Nan값 확인
+shoes_df.info()
+### 3-1. grade 컬럼
+# grade type이 object과 float가 섞여있음
+shoes_df['grade'].value_counts()
+shoes_df['grade'] = shoes_df['grade'].astype(str).str.strip().astype(float)
+# grade값을 채우기 위해 product_id별 grade값의 평균값으로 채우려고 한다.
+
+# product_id별 평균 값을 반올림함.
+product_grade_mean_rounded = shoes_df.groupby('product_id')['grade'].mean().round(0)
+# nan값을 가지고 있는 product_id일 경우 product_grade_mean_rounded의 평균값으로 대체
+for idx in shoes_df.index:
+    if pd.isna(shoes_df.loc[idx, 'grade']) :
+        product_id = shoes_df.loc[idx, 'product_id']
+        if product_id in product_grade_mean_rounded :
+            shoes_df.loc[idx, 'grade'] = product_grade_mean_rounded[product_id]
+### 3-2. useful 컬럼
+# 0으로 채워넣기
+shoes_df['useful_count'] = shoes_df['useful_count'].fillna(0.0)
+### 3-3. product color 컬럼
+    - 너무 많은 종류의 컬러 수가 존재.
+    - 일정 종류의 컬럼 수로 정제
+    - 나머지는 Other로 반환
+### 3-4. product gender 컬럼
+    - ABC Mart와 ShoesMarker 사이트에서는 성별이 없음.
+    - 성별 컬럼은 중요한 컬럼으로 생각, 각 사이트에서 데이터 수집 및 입력 
+# 3. 전처리 완료된 데이터 불러오기 
+shoes_df = pd.read_csv("cleaned_shoes_data_1st.csv")
+# # 1. product_id 기준으로 대표 product_name 하나만 추출 (중복 제거)
+# vans_name_map = vans_df.drop_duplicates(subset='product_id').set_index('product_id')['product_name']
+
+# # 2. shoes_df의 VANS 제품만 마스크링
+# vans_mask = shoes_df['brand_name'] == 'VANS'
+
+# # 3. product_id 기준으로 정제된 product_name 덮어쓰기
+# shoes_df.loc[vans_mask, 'product_name'] = shoes_df.loc[vans_mask, 'product_id'].map(vans_name_map)
+shoes_df['product_color'] = shoes_df['color']
+shoes_df['product_gender'] = shoes_df['edited_product_gender']
+# 4. 시각화
+import seaborn as sns
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+import matplotlib.font_manager as fm
+# 한글 폰트 설정 (예: 나눔고딕)
+plt.rc('font', family='NanumGothic')
+## 4-1. 평점 분포
+sns.histplot(shoes_df['grade'], bins = 20)
+plt.title('평점 분포')
+plt.xlabel('평점')
+plt.ylabel('리뷰 수')
+plt.show()
+- 전반적인 사용자 만족도는 5점이 제일 높은 것으로 확인
+## 4-2. 브랜드별 평균 평점
+brand_avg = shoes_df.groupby('brand_name')['grade'].mean().sort_values(ascending = False)
+sns.barplot(x = brand_avg.values, y = brand_avg.index)
+plt.title('브랜드별 평균 평점')
+plt.xlabel('평균 평점')
+plt.ylabel('브랜드')
+plt.show()
+- 대부분의 평점이 비슷, 높게 분포
+### 1) 브랜드별로 평점의 분포 확인
+brands = shoes_df['brand_name'].unique()
+
+n_cols = 4
+n_rows = (len(brands) + n_cols - 1) // n_cols
+fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 5*n_rows))
+
+# 직접 Bins 설정: 평점 0~5를 0.5 단위로 끊기
+bins = [0, 0.5, 1.5, 2.5, 3.5, 4.5, 5]
+
+for idx, brand in enumerate(brands):
+    ax = axes[idx // n_cols, idx % n_cols]
+    brand_data = shoes_df[shoes_df['brand_name'] == brand]
+    ax.hist(brand_data['grade'], bins=bins, edgecolor='black')
+    ax.set_title(brand)
+    ax.set_xlim(0, 5)
+    ax.set_xticks([0, 1, 2, 3, 4, 5])
+    ax.set_xlabel('평점')
+    ax.set_ylabel('리뷰 수')
+
+# 빈 공간 없애기
+for idx in range(len(brands), n_rows * n_cols):
+    fig.delaxes(axes[idx // n_cols, idx % n_cols])
+
+plt.suptitle('브랜드별 평점 분포 (0~5)', fontsize=20)
+plt.tight_layout(rect=[0, 0, 1, 0.97])
+plt.show()
+- 각 브랜드별 평점 분포는 5점이 제일 많음, 그 다음 4점 3점 순
+    - VANS와 NIKE, NEWBALANCE는 1점이 다른 브랜드에 비해 더 분포함.
+- ADIDAS > VANS > CONVERS 순으로 리뷰 수 분포
+shoes_df[shoes_df['grade'] == 1].groupby('brand_name')['grade'].mean()
+### 2) 브랜드별 1점대 비율
+one_grade_ratio = shoes_df.groupby('brand_name').apply(lambda x: (x['grade'] == 1).mean()).sort_values(ascending=False)
+
+plt.figure(figsize=(10,6))
+sns.barplot(x=one_grade_ratio.values, y=one_grade_ratio.index)
+plt.title('브랜드별 1점 리뷰 비율')
+plt.xlabel('1점 비율')
+plt.ylabel('브랜드')
+# plt.xlim(0,1)
+plt.show()
+
+- 브랜드별 1점 대 비율은 나이키가 제일 높음
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 분석할 브랜드 리스트
+brands = shoes_df['brand_name'].unique()
+
+# 그래프 크기 설정
+plt.figure(figsize=(20, 30))
+
+# 브랜드별로 반복
+for idx, brand in enumerate(brands, 1):
+    plt.subplot(4, 2, idx)  # 4행 2열 subplot
+
+    # 해당 브랜드에서 grade가 1 또는 2인 데이터만 필터링
+    brand_df = shoes_df[(shoes_df['brand_name'] == brand) & (shoes_df['grade'].isin([1, 2]))]
+    
+    # 상품별로 1점+2점 리뷰 개수 카운트
+    product_counts = brand_df['product_name'].value_counts().head(10)  # 상위 10개
+    
+    # barplot 그리기
+    sns.barplot(x=product_counts.values, y=product_counts.index, palette='Reds_r')
+    plt.title(f'{brand} - 1점+2점 리뷰 많은 상품 Top10')
+    plt.xlabel('1점+2점 리뷰 수')
+    plt.ylabel('상품명')
+
+plt.tight_layout()
+plt.show()
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 분석할 브랜드 리스트
+brands = shoes_df['brand_name'].unique()
+
+# 그래프 크기 설정
+plt.figure(figsize=(20, 30))
+
+# 브랜드별로 반복
+for idx, brand in enumerate(brands, 1):
+    plt.subplot(4, 2, idx)  # 4행 2열 subplot
+
+    # 해당 브랜드에서 grade가 1 또는 2인 데이터만 필터링
+    brand_df = shoes_df[(shoes_df['brand_name'] == brand) & (shoes_df['grade'].isin([4, 5]))]
+    
+    # 상품별로 1점+2점 리뷰 개수 카운트
+    product_counts = brand_df['product_name'].value_counts().head(10)  # 상위 10개
+    
+    # barplot 그리기
+    sns.barplot(x=product_counts.values, y=product_counts.index, palette='Blues')
+    plt.title(f'{brand} - 4점+5점 리뷰 많은 상품 Top10')
+    plt.xlabel('4점+5점 리뷰 수')
+    plt.ylabel('상품명')
+
+plt.tight_layout()
+plt.show()
+## 4-3. 제품별 리뷰 수 Top 10
+top_products = shoes_df['product_name'].value_counts().head(10)
+sns.barplot(x=top_products.values, y=top_products.index)
+plt.title('제품별 리뷰 수 TOP 10')
+plt.xlabel('리뷰 수')
+plt.ylabel('제품명')
+plt.show()
+## 4-4. 컬러별 평균 평점
+color_avg = shoes_df.groupby('product_color')['grade'].mean().sort_values(ascending=False).head(10)
+sns.barplot(x=color_avg.values, y=color_avg.index)
+plt.title('컬러별 평균 평점')
+plt.xlabel('평균 평점')
+plt.ylabel('제품 색상')
+plt.show()
+## 4-5. 가격 평점 산점도
+scatter_df = shoes_df[['product_price', 'grade']]
+scatter_df.info()
+scatter_df['product_price'] = scatter_df['product_price'].str.replace(",", "")
+scatter_df['product_price'] = scatter_df['product_price'].astype(int)
+scatter_df.info()
+sns.scatterplot(data = scatter_df, x = 'product_price', y = 'grade')
+plt.xlabel('가격(원)')
+plt.ylabel('평점')
+plt.show()
+## 4-6. 유용한 리뷰 수 분포
+sns.histplot(shoes_df['useful_count'])
+plt.show()
+- 0~100 사이에 집중하고 있음
+## 4-7. 발볼 넓음과 평점
+- 발볼 착용감 평가가 평점에 미치는 영향 
+sns.boxplot(data = shoes_df, x = 'stat_ball_wide', y = 'grade')
+plt.show()
+## 4-8. 발등 높음과 평점
+sns.boxplot(x='stat_instep_high', y='grade', data=shoes_df)
+plt.title('발등 높음 수 vs 평점')
+plt.xlabel('발등 높음 평가 수')
+plt.ylabel('평점')
+plt.show()
+## 4-9. 리뷰 텍스트 워드클라우드
+from wordcloud import WordCloud
+
+text = ' '.join(shoes_df['review_contents'].dropna().astype(str))
+wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.title('리뷰 워드클라우드')
+plt.show()
+# 5. 모델링
+shoes_df.head()
+## 5-1. TF-IDF + 코사인
+: 문서 집합에서 특정 단어각 얼마나 중요한지를 수치로 나타내는 대표적인 텍스트 벡터화 방법
+
+- TF : 특정 문서 내에서 단어가 얼마나 자주 등장하는지
+- IDF : 해당 단어가 전체 문서 중에서 얼마나 희귀한지
+
+1. 원리
+    1) 각 제품의 리뷰를 제품별로 하나로 합쳐 텍스트로 만듦
+    2) TF-IDF 방식으로 백터화한 뒤
+    3) 사용자의 입력 또는 특정 제품과 코사인 유사도를 계산
+    4) 가장 유사한 제품을 추천하는 방식 (유사도가 높은 것)
+tf_idf_shoes_df = shoes_df.copy()
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from konlpy.tag import Okt
+1. 형태소 
+- 의미를 가지는 가장 작은 단위
+
+2. 불용어
+- 분석에 의미 엉ㅄ는 단어
+    예) 조사나 접속사, 의미 희석어 등
+    - 불용어를 제거하면 TF-IDF에 의미 있는 단어에 더 높은 가중치 부여 
+# 형태소 분석기 및 불용어 불러오기
+okt = Okt()
+with open('stopwords.txt', encoding='utf-8') as f:
+    stopwords = set(line.strip() for line in f if line.strip())
+# 형태소 분석 + 불용어 제거 함수
+
+def clean_korean_text(text) :
+    if pd.isnull(text):
+        return ''
+    tokens = okt.morphs(text, stem=True)
+    clean_tokens = [t for t in tokens if t not in stopwords]
+    return ' '.join(clean_tokens)
+# 제품별 리뷰 통합
+product_reviews = tf_idf_shoes_df.groupby('product_name')['review_contents'].apply(lambda x: ' '.join(x)).reset_index()
+product_reviews['cleaned_review'] = product_reviews['review_contents'].apply(clean_korean_text)
+product_reviews
+from wordcloud import WordCloud
+
+text = ' '.join(product_reviews['cleaned_review'].dropna().astype(str))
+wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.title('리뷰 워드클라우드')
+plt.show()
+# TF-IDF 벡터화
+vectorizer = TfidfVectorizer(max_features=5000)
+review_tfidf_matrix = vectorizer.fit_transform(product_reviews['cleaned_review'])
+def recommend_with_filters(query, top_n=5, color_filter=None, brand_filter=None):
+    query_clean = clean_korean_text(query)
+    query_vec = vectorizer.transform([query_clean])
+    similarity_scores = cosine_similarity(query_vec, review_tfidf_matrix).flatten()
+    
+    product_reviews['similarity'] = similarity_scores
+    top_df = product_reviews.copy()
+    
+    # shoes_df에서 추가 정보 merge
+    top_df = pd.merge(top_df, shoes_df[['product_name', 'brand_name', 'grade', 'product_color']], on='product_name', how='left')
+    
+    # 필터 적용
+    if color_filter:
+        top_df = top_df[top_df['product_color'].str.contains(color_filter, na=False, case=False)]
+    if brand_filter:
+        top_df = top_df[top_df['brand_name'].str.contains(brand_filter, na=False, case=False)]
+    
+    # ✅ product_name 기준 중복 제거
+    top_df = top_df.sort_values(by='similarity', ascending=False)
+    top_df = top_df.drop_duplicates(subset='product_name', keep='first')
+    
+    return top_df.head(top_n)
+# 5. 사용자 입력 기반 추천 실행
+if __name__ == "__main__":
+    print("신발 리뷰 기반 추천 시스템입니다.\n")
+    
+    query = input("1️어떤 신발을 찾고 계신가요? (예: 폭신하고 발볼이 넓은 신발): ")
+    brand = input("2️선호 브랜드가 있으신가요? (예: VANS, 없으면 Enter): ").strip()
+    color = input("3️원하는 색상이 있으신가요? (예: BLACK, 없으면 Enter): ").strip()
+
+    recommended = recommend_with_filters(query, top_n=5, brand_filter=brand if brand else None, color_filter=color if color else None)
+    print("\n[요구 사항]")
+    print(f"{query}")
+    print("\n[brand]")
+    print(f"{brand}")
+    print('\n[color]')
+    print(f'{color}')
+    print("\n[추천 결과]")
+    print(recommended[['product_name', 'brand_name', 'grade', 'product_color', 'similarity']])
+for name in recommended['product_name']:
+    print(f"\n제품명: {name}")
+    print(product_reviews.loc[product_reviews['product_name'] == name, 'review_contents'].values[0])
+- 발볼이 넓은 신발을 추천받길 원했으나, 3번째 신발 같은 경우 발볼이 좁은 듯하다는 리뷰에도 '발볼'때문에 추천 해줌.
+    - TF-IDF는 단순한 빈도 기반의 가중치로 만드는 모델
+    - 문맥을 이해할 수 있는 모델을 찾아야함
+## 5-2. TF-IDF + 감성모델
+- KoBert로 리뷰에 대해 감성 분석 수행
+    - positive 리뷰만 필터링
+    - 필터링된 긍정 리뷰만 제품별로 합침
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from konlpy.tag import Okt
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
+import torch.nn.functional as F
+# 형태소 분석기 및 불용어 불러오기
+okt = Okt()
+with open('stopwords.txt', encoding='utf-8') as f:
+    stopwords = set(line.strip() for line in f if line.strip())
+
+# 감성 분석기 로드 (Huggingface KoBERT 기반)
+tokenizer = AutoTokenizer.from_pretrained("beomi/kcbert-base")
+model = AutoModelForSequenceClassification.from_pretrained("beomi/kcbert-base", num_labels=2)
+
+def predict_sentiment(text):
+    if pd.isnull(text) or not isinstance(text, str):
+        return None
+    try:
+        inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
+        with torch.no_grad():
+            outputs = model(**inputs)
+            probs = F.softmax(outputs.logits, dim=1)
+            label = torch.argmax(probs, dim=1).item()
+        return 'positive' if label == 1 else 'negative'
+    except:
+        return None
+
+# 형태소 분석 + 불용어 제거 함수
+def clean_korean_text(text):
+    if pd.isnull(text):
+        return ''
+    tokens = okt.morphs(text, stem=True)
+    clean_tokens = [t for t in tokens if t not in stopwords and len(t) > 1]
+    return ' '.join(clean_tokens)
+# 1. 리뷰에 감성 분석 적용
+tf_idf_shoes_df['sentiment'] = tf_idf_shoes_df['review_contents'].apply(predict_sentiment)
+
+# 2. 긍정 리뷰만 필터링
+positive_df = tf_idf_shoes_df[tf_idf_shoes_df['sentiment'] == 'positive']
+
+# 3. 제품별 긍정 리뷰 통합 및 정제
+product_reviews = positive_df.groupby('product_name')['review_contents'].apply(lambda x: ' '.join(x.dropna())).reset_index()
+product_reviews['cleaned_review'] = product_reviews['review_contents'].apply(clean_korean_text)
+
+# 4. TF-IDF 벡터화
+vectorizer = TfidfVectorizer(max_features=5000)
+review_tfidf_matrix = vectorizer.fit_transform(product_reviews['cleaned_review'])
+# 5. 추천 함수 정의 (필터 포함)
+def recommend_with_filters_and_sentiment(query, top_n=5, brand_filter=None, color_filter=None):
+    query_clean = clean_korean_text(query)
+    query_vec = vectorizer.transform([query_clean])
+    similarity_scores = cosine_similarity(query_vec, review_tfidf_matrix).flatten()
+    product_reviews['similarity'] = similarity_scores
+
+    # 필터링
+    filtered = product_reviews.copy()
+    if brand_filter:
+        filtered = filtered.merge(tf_idf_shoes_df[['product_name', 'brand_name']].drop_duplicates(), on='product_name')
+        filtered = filtered[filtered['brand_name'].str.contains(brand_filter, case=False, na=False)]
+    if color_filter:
+        filtered = filtered.merge(tf_idf_shoes_df[['product_name', 'product_color']].drop_duplicates(), on='product_name')
+        filtered = filtered[filtered['product_color'].str.contains(color_filter, case=False, na=False)]
+
+    top_indices = filtered.sort_values('similarity', ascending=False).head(top_n).index
+    result = filtered.loc[top_indices]
+
+    # 상세 정보 결합
+    final = result.merge(tf_idf_shoes_df[['product_name', 'brand_name', 'grade', 'product_color']].drop_duplicates(), on='product_name')
+    return final[['product_name', 'brand_name', 'grade', 'product_color', 'similarity']]
+
+# 6. 사용자 입력 기반 추천 실행
+if __name__ == "__main__":
+    print("🔍 신발 리뷰 기반 추천 시스템입니다.\n")
+
+    query = input("1. 어떤 신발을 찾고 계신가요? (예: 폭신하고 발볼이 넓은 신발): ")
+    brand = input("2. 선호 브랜드가 있으신가요? (예: VANS, 없으면 Enter): ").strip()
+    color = input("3. 원하는 색상이 있으신가요? (예: BLACK, 없으면 Enter): ").strip()
+
+    recommended = recommend_with_filters_and_sentiment(
+        query, top_n=5,
+        brand_filter=brand if brand else None,
+        color_filter=color if color else None
+    )
+
+    print("\n✅ [추천 결과]")
+    print(recommended)
+for name in recommended['product_name']:
+    print(f"\n제품명: {name}")
+    print(product_reviews.loc[product_reviews['product_name'] == name, 'review_contents'].values[0])
+# 6. WordCloud
+### 6-1. 평점별 WordCloud
+- 정성적 분석
+- 시각화를 통해 어떤 주제가 자주 언급되는지 파악이 가능
+# !pip install wordcloud matplotlib pandas
+from wordcloud import WordCloud
+# 평점 기준으로 긍정(4~5), 부정(1~2), 중간(3)으로 분리
+positive_reviews = tf_idf_shoes_df[tf_idf_shoes_df['grade'] >= 4 ]['review_contents']
+negative_reviews = tf_idf_shoes_df[(tf_idf_shoes_df['grade'] >= 1) & (tf_idf_shoes_df['grade'] <= 2) ]['review_contents']
+mid_reviews = tf_idf_shoes_df[tf_idf_shoes_df['grade'] == 3]['review_contents']
+zero_reviews = tf_idf_shoes_df[tf_idf_shoes_df['grade'] == 0]['review_contents']
+print(len(positive_reviews))
+print(len(negative_reviews))
+print(len(mid_reviews))
+print(len(zero_reviews))
+positive_reviews
+# 하나의 긴 문장으로 join7
+pos_text = " ".join(positive_reviews.astype(str))
+neg_text = " ".join(negative_reviews.astype(str))
+mid_text = " ".join(mid_reviews.astype(str))
+zero_text = " ".join(zero_reviews.astype(str))
+# 폰트 확인
+import os
+
+fonts_dir = "C:\\Windows\\Fonts"
+
+keywords = ["nanum", "고딕", "gulim", "malgun", "batang", "dotum", "한글"]  # 주요 한글 폰트 키워드
+
+for font in os.listdir(fonts_dir):
+    if font.lower().endswith(".ttf") and any(keyword.lower() in font.lower() for keyword in keywords):
+        print(font)
+def draw_wordcloud(text, title):
+    wc = WordCloud(font_path="C:\\Windows\\Fonts\\malgun.ttf",  # 한글 폰트 경로 필요
+                   background_color="white",
+                   width=800,
+                   height=400).generate(text)
+
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wc, interpolation="bilinear")
+    plt.axis("off")
+    plt.title(title, fontsize=16)
+    plt.show()
+draw_wordcloud(pos_text, "긍정 리뷰 (평점 4~5) WordCloud")
+- 주요 단어: 신발, 좋아요, 이뻐요, 추천, 정말, 많이, 생각보다, 좋습니다. 
+draw_wordcloud(neg_text, "부정 리뷰 (평점 1~2) WordCloud")
+- 주요 단어: 그냥, 신발, 너무, 좀, 발볼이, 교환, 정말 등
+draw_wordcloud(neg_text, "중간 리뷰 (평점 3) WordCloud")
+- 그냥, 교환, 정말, 사이즈, 
+draw_wordcloud(zero_text, "제로 리뷰 (평점 0) WordCloud")
+- 저렴한, 물건, 가격에, 정말
+### 6-2. 평점별 WordCloud (okt)
+# !pip install konlpy
+from konlpy.tag import Okt
+def preprocess_text_with_okt(text_series):
+    okt = Okt()
+    nouns = []
+
+    for sentence in text_series.dropna():  # NaN 제거
+        try:
+            nouns += okt.nouns(str(sentence))  # 문장마다 명사 추출
+        except:
+            continue
+
+    return " ".join(nouns)  # 워드클라우드를 위해 문자열로 결합
+def draw_wordcloud(text, title):
+    wc = WordCloud(
+        font_path="C:\\Windows\\Fonts\\malgun.ttf",  
+        background_color="white",
+        width=800,
+        height=400
+    ).generate(text)
+
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wc, interpolation="bilinear")
+    plt.axis("off")
+    plt.title(title, fontsize=16)
+    plt.show()
+# Okt 기반 명사 추출 후 텍스트 전처리
+pos_text_okt = preprocess_text_with_okt(positive_reviews)
+
+# WordCloud 출력
+draw_wordcloud(pos_text_okt, "긍정 리뷰 (평점 4~5) - Okt 명사 기반 WordCloud")
+- 정사이즈, 착용감, 디자인, 신발, 생각, 신고?
+neg_text_okt = preprocess_text_with_okt(negative_reviews)
+draw_wordcloud(neg_text_okt, "부정 리뷰 (평점 1~2) - Okt 명사 기반 WordCloud")
+- 신발, 교환, 배송, 상품, 사이즈, 반품, 매장, 불량, 그냥, 환불, 상태 ...
+mid_text_okt = preprocess_text_with_okt(mid_reviews)
+draw_wordcloud(mid_text_okt, "중간 리뷰 (평점 3) - Okt 명사 기반 WordCloud")
+- 사이즈, 신ㄴ발, 배송, 발볼, 조금, 신고, 좀, 구매
+zero_text_okt = preprocess_text_with_okt(zero_reviews)
+draw_wordcloud(zero_text_okt, "제로 리뷰 (평점 0) - Okt 명사 기반 WordCloud")
+- 정말, 뻑뻑, 가격, 물건, 처음, 디자인
